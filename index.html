@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sowmiya A — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#02040c;
+  --blue:#00d9ff;
+  --cyan:#39ffe0;
+  --purple:#9b5cff;
+  --purple-deep:#6a2eff;
+  --gold:#ffd166;
+  --panel:rgba(8,14,32,0.68);
+  --panel-border:rgba(0,217,255,0.28);
+  --text:#eaf6ff;
+  --muted:#8fa3c9;
+  --font-display:'Orbitron',sans-serif;
+  --font-body:'Exo 2',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--font-body);color:var(--text);}
+#gameCanvas{position:fixed;inset:0;display:block;z-index:1;background:radial-gradient(ellipse at 50% 50%, #060a1c 0%, #02040c 70%);}
+::selection{background:var(--cyan);color:#02040c;}
+
+/* ---------------- LOADER ---------------- */
+#loader{
+  position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .7s ease, visibility .7s ease;
+}
+#loader.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.loader-ring{width:74px;height:74px;border-radius:50%;border:3px solid rgba(0,217,255,0.15);border-top-color:var(--cyan);border-right-color:var(--purple);animation:spin 1.1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{margin-top:22px;font-family:var(--font-display);font-size:.75rem;letter-spacing:5px;color:var(--muted);}
+
+/* ---------------- START / BRIEFING SCREEN ---------------- */
+#startScreen{
+  position:fixed;inset:0;z-index:9998;
+  background:radial-gradient(ellipse at 50% 30%, rgba(107,46,255,0.18), transparent 60%),
+             radial-gradient(ellipse at 70% 80%, rgba(0,217,255,0.12), transparent 60%), var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .8s ease, visibility .8s ease;
+}
+#startScreen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.briefing{
+  max-width:640px;width:92%;text-align:center;padding:50px 40px;
+  background:var(--panel);border:1px solid var(--panel-border);border-radius:22px;
+  backdrop-filter:blur(18px);box-shadow:0 20px 70px rgba(0,0,0,.6), 0 0 60px rgba(0,217,255,.08);
+}
+.briefing .eyebrow{font-family:var(--font-display);font-size:.65rem;letter-spacing:5px;color:var(--cyan);margin-bottom:14px;}
+.briefing h1{font-family:var(--font-display);font-weight:900;font-size:clamp(1.8rem,5vw,2.6rem);
+  background:linear-gradient(120deg,#fff 20%,var(--cyan) 60%,var(--purple) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:14px;line-height:1.15;}
+.briefing p{color:var(--muted);font-size:.94rem;line-height:1.7;margin-bottom:26px;}
+.controls-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:30px;text-align:left;}
+.control-item{background:rgba(255,255,255,0.03);border:1px solid var(--panel-border);border-radius:12px;padding:14px 16px;}
+.control-item b{display:block;font-family:var(--font-display);font-size:.68rem;letter-spacing:1.5px;color:var(--cyan);margin-bottom:6px;}
+.control-item span{font-size:.8rem;color:var(--muted);}
+.btn-launch{
+  font-family:var(--font-display);font-size:.82rem;letter-spacing:3px;
+  padding:16px 46px;border-radius:10px;border:none;cursor:pointer;
+  background:linear-gradient(90deg,var(--purple),var(--blue),var(--cyan));
+  color:#02040c;font-weight:700;box-shadow:0 10px 40px rgba(0,217,255,.35);
+  transition:transform .3s ease, box-shadow .3s ease;
+}
+.btn-launch:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 16px 50px rgba(0,217,255,.5);}
+
+/* ---------------- COMPLETE / OUTRO SCREEN ---------------- */
+#completeScreen{
+  position:fixed;inset:0;z-index:9990;
+  background:radial-gradient(ellipse at 50% 30%, rgba(107,46,255,0.18), transparent 60%),
+             radial-gradient(ellipse at 70% 80%, rgba(0,217,255,0.12), transparent 60%), var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity .8s ease, visibility .8s ease;
+}
+#completeScreen.open{opacity:1;visibility:visible;}
+
+/* ---------------- HUD ---------------- */
+#hud{position:fixed;top:0;left:0;width:100%;z-index:50;pointer-events:none;padding:20px;display:flex;justify-content:space-between;align-items:flex-start;}
+.hud-panel{background:var(--panel);border:1px solid var(--panel-border);border-radius:14px;backdrop-filter:blur(14px);padding:14px 20px;pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.4);}
+#missionPanel{min-width:260px;}
+#missionPanel .m-title{font-family:var(--font-display);font-size:.62rem;letter-spacing:3px;color:var(--muted);margin-bottom:6px;}
+#missionPanel .m-progress{font-family:var(--font-display);font-size:.88rem;color:var(--cyan);letter-spacing:1px;margin-bottom:10px;}
+.progress-track{height:6px;border-radius:6px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width .6s ease;box-shadow:0 0 10px var(--cyan);}
+
+.btn-choose-section{
+  margin-top:14px;width:100%;padding:11px;border-radius:10px;border:1px solid var(--panel-border);
+  background:rgba(0,217,255,0.06);color:var(--cyan);font-family:var(--font-display);font-size:.62rem;letter-spacing:2px;
+  cursor:pointer;transition:all .25s ease;
+}
+.btn-choose-section:hover{background:var(--cyan);color:#02040c;box-shadow:0 6px 20px rgba(0,217,255,.35);}
+
+/* ---------------- SECTION SELECTOR ---------------- */
+#sectionMenu{
+  position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,4,12,0.82);backdrop-filter:blur(6px);padding:20px;
+  opacity:0;visibility:hidden;transition:opacity .35s ease, visibility .35s ease;
+}
+#sectionMenu.open{opacity:1;visibility:visible;}
+#sectionMenuPanel{
+  width:100%;max-width:440px;max-height:82vh;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--panel-border);border-radius:18px;backdrop-filter:blur(18px);
+  padding:24px;box-shadow:0 30px 90px rgba(0,0,0,.7), 0 0 80px rgba(0,217,255,.1);
+  transform:translateY(24px) scale(.97);opacity:0;transition:transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
+}
+#sectionMenu.open #sectionMenuPanel{transform:translateY(0) scale(1);opacity:1;}
+#sectionMenuPanel::-webkit-scrollbar{width:7px;}
+#sectionMenuPanel::-webkit-scrollbar-thumb{background:linear-gradient(var(--purple),var(--cyan));border-radius:8px;}
+.section-menu-title{font-family:var(--font-display);font-size:.7rem;letter-spacing:3px;color:var(--cyan);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.section-menu-close{cursor:pointer;color:var(--muted);font-size:1rem;transition:color .25s ease;}
+.section-menu-close:hover{color:var(--cyan);}
+.section-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .25s ease, border-color .25s ease;margin-bottom:6px;border:1px solid transparent;}
+.section-item:hover{background:rgba(255,255,255,0.06);}
+.section-item.active{background:rgba(0,217,255,0.1);border-color:var(--panel-border);}
+.section-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.section-info{flex:1;min-width:0;}
+.section-info b{display:block;font-family:var(--font-display);font-size:.78rem;color:var(--text);}
+.section-info span{font-size:.72rem;color:var(--muted);}
+.section-check{margin-left:auto;color:var(--gold);font-size:.85rem;display:none;flex-shrink:0;}
+.section-item.visited .section-check{display:inline;}
+
+
+
+/* ---------------- FLOATING DECORATIVE ORBS (inside info panel) ---------------- */
+.float-orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(3px);opacity:.4;animation:floatOrb 6s ease-in-out infinite;z-index:0;}
+.float-orb.o1{width:76px;height:76px;background:radial-gradient(circle,var(--cyan),transparent 70%);top:-24px;right:12%;}
+.float-orb.o2{width:54px;height:54px;background:radial-gradient(circle,var(--purple),transparent 70%);bottom:6%;left:-18px;animation-delay:1.4s;animation-duration:7.5s;}
+.float-orb.o3{width:42px;height:42px;background:radial-gradient(circle,var(--gold),transparent 70%);top:42%;right:-16px;animation-delay:2.8s;animation-duration:5.6s;}
+@keyframes floatOrb{0%,100%{transform:translateY(0) translateX(0);}50%{transform:translateY(-18px) translateX(6px);}}
+
+/* ---------------- GLOW HIGHLIGHTS ---------------- */
+@keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 3px currentColor);}50%{filter:drop-shadow(0 0 13px currentColor);}}
+.glow-pulse{animation:glowPulse 2.3s ease-in-out infinite;}
+.h-badge,.h-cert-icon,.h-contact-icon,.panel-eyebrow{animation:glowPulse 2.4s ease-in-out infinite;}
+
+#transitLabel{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:50;
+  font-family:var(--font-display);font-size:.7rem;letter-spacing:3px;color:var(--gold);
+  background:var(--panel);border:1px solid rgba(255,209,102,0.4);border-radius:30px;padding:9px 22px;
+  opacity:0;transition:opacity .35s ease;pointer-events:none;white-space:nowrap;
+}
+#transitLabel.show{opacity:1;}
+
+/* minimap */
+#minimapWrap{position:fixed;bottom:20px;right:20px;z-index:50;background:var(--panel);border:1px solid var(--panel-border);border-radius:14px;backdrop-filter:blur(14px);padding:10px;box-shadow:0 8px 30px rgba(0,0,0,.4);}
+#minimap{display:block;border-radius:8px;background:rgba(0,0,0,0.3);}
+.minimap-title{font-family:var(--font-display);font-size:.55rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px;text-align:center;}
+
+/* planet labels */
+#planetLabels{position:fixed;inset:0;z-index:30;pointer-events:none;}
+.planet-label{position:absolute;transform:translate(-50%,-50%);text-align:center;white-space:nowrap;transition:opacity .3s ease;}
+.planet-label .p-name{font-family:var(--font-display);font-size:.68rem;letter-spacing:2px;color:var(--text);text-shadow:0 0 12px rgba(0,217,255,.7);}
+.planet-label .p-sub{font-size:.6rem;color:var(--muted);margin-top:2px;}
+.planet-label.visited .p-name{color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,.8);}
+.planet-label .p-check{display:none;color:var(--gold);font-size:.65rem;margin-left:4px;}
+.planet-label.visited .p-check{display:inline;}
+
+/* dock flash */
+#dockFlash{position:fixed;inset:0;z-index:60;background:radial-gradient(circle, rgba(255,255,255,0.9), rgba(0,217,255,0.4) 40%, transparent 70%);opacity:0;pointer-events:none;}
+#dockFlash.flash{animation:flashAnim .6s ease-out;}
+@keyframes flashAnim{0%{opacity:0;}25%{opacity:.85;}100%{opacity:0;}}
+
+/* ---------------- HOLOGRAPHIC INFO PANEL ---------------- */
+#infoOverlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(ellipse at center, rgba(4,8,20,0.4), rgba(2,4,12,0.88));
+  opacity:0;visibility:hidden;transition:opacity .5s ease, visibility .5s ease;}
+#infoOverlay.open{opacity:1;visibility:visible;}
+#infoPanel{
+  width:100%;max-width:780px;max-height:84vh;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--panel-border);border-radius:20px;backdrop-filter:blur(20px);
+  box-shadow:0 30px 90px rgba(0,0,0,.7), 0 0 80px rgba(0,217,255,.12);
+  padding:40px 40px 34px;position:relative;
+  transform:translateY(40px) scale(.96);opacity:0;transition:transform .5s cubic-bezier(.2,.8,.2,1), opacity .5s ease;
+}
+#infoOverlay.open #infoPanel{transform:translateY(0) scale(1);opacity:1;}
+#infoPanel::-webkit-scrollbar{width:8px;}
+#infoPanel::-webkit-scrollbar-thumb{background:linear-gradient(var(--purple),var(--cyan));border-radius:8px;}
+.dwell-track{height:3px;border-radius:6px;background:rgba(255,255,255,0.08);overflow:hidden;margin-bottom:20px;}
+.panel-actions{position:absolute;top:22px;right:22px;display:flex;gap:8px;}
+.panel-actions button{
+  font-family:var(--font-display);font-size:.6rem;letter-spacing:1.5px;font-weight:700;
+  padding:9px 16px;border-radius:8px;cursor:pointer;transition:all .25s ease;
+}
+#panelRunBtn{border:1px solid var(--panel-border);background:rgba(0,217,255,0.08);color:var(--cyan);}
+#panelRunBtn:hover{background:var(--cyan);color:#02040c;box-shadow:0 6px 20px rgba(0,217,255,.35);}
+#panelCancelBtn{border:1px solid rgba(255,209,102,0.4);background:rgba(255,255,255,0.04);color:var(--muted);}
+#panelCancelBtn:hover{border-color:#ff6b6b;color:#ff6b6b;background:rgba(255,107,107,0.08);}
+#panelPauseBtn{border:1px solid rgba(255,209,102,0.4);background:rgba(255,209,102,0.08);color:var(--gold);}
+#panelPauseBtn:hover{background:var(--gold);color:#02040c;box-shadow:0 6px 20px rgba(255,209,102,.35);}
+#panelPauseBtn.is-paused{background:var(--gold);color:#02040c;}
+.dwell-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--purple),var(--cyan));}
+.panel-eyebrow{font-family:var(--font-display);font-size:.62rem;letter-spacing:4px;color:var(--cyan);margin-bottom:10px;}
+.panel-title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.3rem,3vw,1.9rem);margin-bottom:24px;color:var(--text);min-height:1.3em;}
+.panel-body p{color:var(--muted);line-height:1.8;font-size:.95rem;margin-bottom:14px;}
+.panel-body strong{color:var(--cyan);}
+
+/* reveal animation for panel content blocks */
+.reveal-item{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease;}
+.reveal-item.in{opacity:1;transform:translateY(0);}
+
+/* typing cursor */
+.typing-cursor::after{content:'▋';margin-left:2px;color:var(--cyan);animation:blinkCursor .9s steps(1) infinite;}
+@keyframes blinkCursor{50%{opacity:0;}}
+
+/* timeline (education/internships) */
+.h-timeline{position:relative;padding-left:30px;}
+.h-timeline::before{content:'';position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:linear-gradient(var(--cyan),var(--purple));}
+.h-titem{position:relative;padding-bottom:26px;}
+.h-titem:last-child{padding-bottom:0;}
+.h-titem::before{content:'';position:absolute;left:-30px;top:3px;width:16px;height:16px;border-radius:50%;background:#050912;border:2px solid var(--cyan);box-shadow:0 0 12px var(--cyan);}
+.h-titem .h-year{font-family:var(--font-display);font-size:.62rem;color:var(--gold);letter-spacing:2px;}
+.h-titem h4{font-family:var(--font-body);font-weight:600;font-size:1rem;margin:6px 0 3px;color:var(--text);}
+.h-titem .h-note{font-size:.8rem;color:var(--muted);}
+.h-titem .h-badge{display:inline-block;margin-top:6px;font-size:.7rem;color:var(--cyan);border:1px solid var(--panel-border);padding:3px 11px;border-radius:20px;}
+
+/* skills */
+.h-skill-cat{margin-bottom:26px;}
+.h-skill-cat h5{font-family:var(--font-display);font-size:.72rem;letter-spacing:2px;color:var(--purple);margin-bottom:14px;}
+.h-skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
+.h-skill{background:rgba(255,255,255,0.03);border:1px solid var(--panel-border);border-radius:12px;padding:14px;text-align:center;}
+.h-skill .h-orb{width:44px;height:44px;border-radius:50%;margin:0 auto 8px;background:radial-gradient(circle at 32% 28%, var(--cyan), #062b26 72%);box-shadow:0 0 16px rgba(57,255,224,.4);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.65rem;font-weight:700;color:#02150f;}
+.h-skill .h-name{font-size:.78rem;margin-bottom:8px;}
+.h-xp-track{height:5px;border-radius:5px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.h-xp-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:5px;}
+
+/* projects */
+.h-project{background:rgba(255,255,255,0.03);border:1px solid var(--panel-border);border-radius:14px;padding:22px;margin-bottom:20px;}
+.h-project:last-child{margin-bottom:0;}
+.h-project h4{font-family:var(--font-display);font-size:.95rem;color:var(--text);margin-bottom:10px;}
+.h-project .h-label{font-size:.6rem;letter-spacing:2px;color:var(--gold);font-family:var(--font-display);margin:10px 0 4px;}
+.h-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.h-tags span{font-size:.65rem;padding:4px 10px;border-radius:20px;background:rgba(57,255,224,0.08);border:1px solid rgba(57,255,224,0.3);color:var(--cyan);}
+.h-project-actions{display:flex;gap:10px;margin-top:14px;}
+.h-project-actions a{flex:1;text-align:center;font-size:.65rem;padding:9px;border-radius:8px;font-family:var(--font-display);letter-spacing:1.5px;text-decoration:none;border:1px solid var(--panel-border);color:var(--muted);transition:all .3s ease;}
+.h-project-actions a:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* certifications */
+.h-cert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;}
+.h-cert{background:rgba(255,255,255,0.03);border:1px solid rgba(107,46,255,0.35);border-radius:14px;padding:18px;text-align:center;}
+.h-cert .h-cert-icon{font-size:1.4rem;margin-bottom:8px;}
+.h-cert h5{font-size:.8rem;font-weight:600;color:var(--text);}
+
+/* contact */
+.h-contact-item{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.h-contact-icon{width:38px;height:38px;border-radius:50%;background:rgba(57,255,224,0.08);border:1px solid rgba(57,255,224,0.3);display:flex;align-items:center;justify-content:center;color:var(--cyan);flex-shrink:0;}
+.h-contact-item a,.h-contact-item span{color:var(--muted);text-decoration:none;font-size:.86rem;}
+.h-contact-item a:hover{color:var(--cyan);}
+.h-form{margin-top:20px;display:flex;flex-direction:column;gap:12px;}
+.h-form input,.h-form textarea{background:rgba(255,255,255,0.04);border:1px solid var(--panel-border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:var(--font-body);font-size:.86rem;outline:none;transition:border-color .3s ease;}
+.h-form input:focus,.h-form textarea:focus{border-color:var(--cyan);}
+.h-form textarea{resize:vertical;min-height:90px;}
+.h-form button{align-self:flex-start;font-family:var(--font-display);font-size:.65rem;letter-spacing:2px;padding:12px 28px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--purple),var(--cyan));color:#02040c;font-weight:700;}
+#formMsg{font-size:.75rem;color:var(--cyan);min-height:1em;margin-top:4px;}
+
+@media(max-width:1024px){
+  #missionPanel{min-width:220px;}
+  #minimapWrap{transform:scale(.9);transform-origin:bottom right;}
+}
+
+@media(max-width:760px){
+  .controls-grid{grid-template-columns:1fr;}
+  #infoPanel{padding:30px 22px 26px;}
+  #minimapWrap{transform:scale(.78);transform-origin:bottom right;}
+  #hud{padding:12px;}
+  .hud-panel{padding:12px 14px;}
+  #missionPanel{min-width:0;max-width:62vw;}
+  .float-orb{display:none;}
+}
+
+@media(max-width:420px){
+  #missionPanel{max-width:58vw;}
+  .m-progress{font-size:.72rem;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<canvas id="minimap" width="140" height="90"></canvas>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">WELCOME MY PORTFOLIO</div>
+</div>
+
+<!-- BRIEFING / START SCREEN -->
+<div id="startScreen">
+  <div class="briefing">
+    <div class="eyebrow">MISSION BRIEFING</div>
+    <h1> MY Portfolio</h1>
+    
+
+    <div class="controls-grid">
+      <div class="control-item"><b>AUTOPLAY</b><span>The camera guides the whole tour — nothing to click</span></div>
+      <div class="control-item"><b>ONE PASS</b><span>Every sector is shown exactly once, then the tour ends</span></div>
+    </div>
+
+    <button class="btn-launch" id="launchBtn">🚀 LAUNCH MISSION</button>
+    <button class="btn-choose-section" id="startChooseSectionBtn" title="Skip straight to a section">☰ CHOOSE A SECTION</button>
+  </div>
+</div>
+
+<!-- OUTRO / SUCCESS SCREEN -->
+<div id="completeScreen">
+  <div class="briefing">
+    <div class="eyebrow">TRANSMISSION COMPLETE</div>
+    <h1>All sections have been displayed successfully.</h1>
+    <p>Returning to Home…</p>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-panel" id="missionPanel">
+    <div class="m-title">MISSION CONTROL</div>
+    <div class="m-progress" id="progressText">PRE-LAUNCH · 7 SECTORS</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="btn-choose-section" id="btnChooseSection" title="Choose a section to view">☰ CHOOSE SECTION</button>
+  </div>
+</div>
+<div id="transitLabel"></div>
+
+<div id="minimapWrap"></div>
+
+<div id="planetLabels"></div>
+<div id="dockFlash"></div>
+
+<!-- SECTION SELECTOR — lets the user pick which section they want to see -->
+<div id="sectionMenu">
+  <div id="sectionMenuPanel">
+    <div class="section-menu-title"><span>CHOOSE A SECTION</span><span class="section-menu-close" id="sectionMenuCloseBtn">✕</span></div>
+    <div id="sectionMenuList"></div>
+  </div>
+</div>
+
+<!-- HOLOGRAPHIC INFO OVERLAY -->
+<div id="infoOverlay">
+  <div id="infoPanel">
+    <div class="float-orb o1"></div>
+    <div class="float-orb o2"></div>
+    <div class="float-orb o3"></div>
+    <div class="panel-actions">
+      <button id="panelPauseBtn" title="Pause / resume this section">⏸ PAUSE</button>
+      <button id="panelRunBtn" title="Replay this section">▶ RUN</button>
+      <button id="panelCancelBtn" title="Cancel this section">✕ CANCEL</button>
+    </div>
+    <div class="dwell-track"><div class="dwell-fill" id="dwellFill"></div></div>
+    <div class="panel-eyebrow" id="panelEyebrow">SECTOR TRANSMISSION</div>
+    <div class="panel-title" id="panelTitle">—</div>
+    <div class="panel-body" id="panelBody"></div>
+  </div>
+</div>
+
+<script>
+/* ===================== SETUP ===================== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const mmCanvas = document.getElementById('minimap');
+const mmCtx = mmCanvas.getContext('2d');
+let W = window.innerWidth, H = window.innerHeight;
+function resize(){ W = window.innerWidth; H = window.innerHeight; canvas.width = W; canvas.height = H; }
+resize();
+window.addEventListener('resize', resize);
+
+const WORLD = { w: 2600, h: 1700 };
+
+/* ===================== PLANET DATA ===================== */
+const PLANET_COLORS = ['#00d9ff','#9b5cff','#39ffe0','#6a2eff','#00d9ff','#9b5cff','#39ffe0'];
+
+const planets = [
+  {
+    id:'about', name:'Nexus Prime', sub:'Mission Objective', x:750, y:820, radius:58, color:PLANET_COLORS[0],
+    eyebrow:'MISSION OBJECTIVE', title:'Career Objective', duration:10000,
+    body:`<p>A motivated <strong>Biomedical Engineering</strong> student with a growing command of programming, web development, and database technologies, focused on bridging <strong>healthcare innovation</strong> with modern software engineering.</p>
+    <p>Seeking opportunities to apply strong technical, analytical, and problem-solving skills across biomedical and software projects — contributing meaningfully to organizational growth while building expertise at the intersection of medicine and technology.</p>`
+  },
+  {
+    id:'education', name:'Chronos Academy', sub:'Education', x:1180, y:430, radius:60, color:PLANET_COLORS[1],
+    eyebrow:'NAVIGATION LOG', title:'Education Timeline', duration:10000,
+    body:`<div class="h-timeline">
+      <div class="h-titem"><div class="h-year">2023 — 2027</div><h4>B.E. Biomedical Engineering</h4><div class="h-note">AVS Engineering College (Autonomous), Salem</div><span class="h-badge">CGPA: 8.40 / 10</span></div>
+      <div class="h-titem"><div class="h-year">2022 — 2023</div><h4>Higher Secondary Certificate (HSC)</h4><div class="h-note">Municipal Girls Higher Secondary School, Salem</div><span class="h-badge">60%</span></div>
+      <div class="h-titem"><div class="h-year">2020 — 2021</div><h4>Secondary School Leaving Certificate (SSLC)</h4><div class="h-note">Municipal Girls Higher Secondary School, Salem</div><span class="h-badge">100%</span></div>
+    </div>`
+  },
+  {
+    id:'skills', name:'Vega Skillfield', sub:'Skills', x:1560, y:920, radius:62, color:PLANET_COLORS[2],
+    eyebrow:'SYSTEMS ONLINE', title:'Skills Galaxy', duration:10000,
+    body:`
+    <div class="h-skill-cat"><h5>PROGRAMMING</h5><div class="h-skill-grid">
+      <div class="h-skill"><div class="h-orb">PY</div><div class="h-name">Python</div><div class="h-xp-track"><div class="h-xp-fill" style="width:85%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">JV</div><div class="h-name">Java</div><div class="h-xp-track"><div class="h-xp-fill" style="width:75%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">ML</div><div class="h-name">MATLAB</div><div class="h-xp-track"><div class="h-xp-fill" style="width:78%"></div></div></div>
+    </div></div>
+    <div class="h-skill-cat"><h5>WEB TECHNOLOGIES</h5><div class="h-skill-grid">
+      <div class="h-skill"><div class="h-orb">H</div><div class="h-name">HTML</div><div class="h-xp-track"><div class="h-xp-fill" style="width:90%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">C</div><div class="h-name">CSS</div><div class="h-xp-track"><div class="h-xp-fill" style="width:85%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">JS</div><div class="h-name">JavaScript</div><div class="h-xp-track"><div class="h-xp-fill" style="width:80%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">BS</div><div class="h-name">Bootstrap</div><div class="h-xp-track"><div class="h-xp-fill" style="width:82%"></div></div></div>
+    </div></div>
+    <div class="h-skill-cat"><h5>DATABASES</h5><div class="h-skill-grid">
+      <div class="h-skill"><div class="h-orb">OR</div><div class="h-name">Oracle</div><div class="h-xp-track"><div class="h-xp-fill" style="width:72%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">MG</div><div class="h-name">MongoDB</div><div class="h-xp-track"><div class="h-xp-fill" style="width:75%"></div></div></div>
+    </div></div>
+    <div class="h-skill-cat"><h5>AREAS OF EXPERTISE</h5><div class="h-skill-grid">
+      <div class="h-skill"><div class="h-orb">FS</div><div class="h-name">Full Stack Dev</div><div class="h-xp-track"><div class="h-xp-fill" style="width:88%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">BI</div><div class="h-name">Biomedical Instruments</div><div class="h-xp-track"><div class="h-xp-fill" style="width:80%"></div></div></div>
+      <div class="h-skill"><div class="h-orb">ES</div><div class="h-name">Embedded Systems</div><div class="h-xp-track"><div class="h-xp-fill" style="width:78%"></div></div></div>
+    </div></div>`
+  },
+  {
+    id:'projects', name:'Forge Station', sub:'Projects', x:2020, y:560, radius:64, color:PLANET_COLORS[3],
+    eyebrow:'ACTIVE MISSIONS', title:'Projects Planet', duration:10000,
+    body:`
+    <div class="h-project"><h4>Patient Health Monitoring System</h4>
+      <p>An IoT-based system built to monitor patient health parameters in real time, combining embedded hardware with sensor data collection for immediate clinical visibility.</p>
+      <div class="h-label">TECHNOLOGIES</div><div class="h-tags"><span>ESP8266/NodeMCU</span><span>Sensors</span><span>LCD Display</span><span>Regulated Power Supply</span></div>
+      <div class="h-label">RESPONSIBILITIES</div><p>Developed an IoT-based biomedical monitoring system using ESP8266, embedded sensors, wireless communication,
+and LCD display for real-time patient health monitoring</p>
+    
+    </div>
+    <div class="h-project"><h4>Icecreamy Website</h4>
+      <p>A responsive e-commerce website built to deliver a smooth, user-friendly shopping experience across devices.</p>
+      <div class="h-label">TECHNOLOGIES</div><div class="h-tags"><span>HTML</span><span>CSS</span><span>JavaScript</span><span></span></div>
+      <div class="h-label">RESPONSIBILITIES</div><p>Developed a responsive multi-page Ice Cream E-commerce website using HTML, CSS, and JavaScript with product catalog,
+shopping cart, wishlist, search functionality, and local storage integration for an enhanced user experience
+.</p>
+<div class="h-project-actions">
+  <a href="https://github.com/sowmiya-a13/IceCreamy-"
+     target="_blank"
+     rel="noopener noreferrer">
+    GitHub ↗
+  </a>
+
+  <a href="https://sowmiya-a13.github.io/IceCreamy-/"
+     target="_blank"
+     rel="noopener noreferrer">
+    Live Demo ↗
+  </a>
+</div>
+    </div>
+    <div class="h-project"><h4>Mangiora – Premium Mango Juice Landing Page</h4>
+
+      <div class="h-label">TECHNOLOGIES</div><div class="h-tags"><span>HTML</span><span>CSS</span><span>JavaScript</span></div>
+      <div class="h-label">RESPONSIBILITIES</div><p>Developed a cinematic, responsive product landing page with scroll-based animations, interactive UI, and modern front-end
+technologies using HTML, CSS, and JavaScript...</p>
+      <div class="h-project-actions">
+      <a href="https://github.com/sowmiya-a13/mangiora"
+      target="_blank"
+     rel="noopener noreferrer">
+     GitHub ↗</a>
+     <a href="https://sowmiya-a13.github.io/mangiora/"
+     target="_blank"
+     rel="noopener noreferrer"
+     >Live Demo ↗</a>
+     </div>
+    </div>`
+  },
+  {
+    id:'internships', name:'Horizon Outpost', sub:'Internships', x:2280, y:1150, radius:58, color:PLANET_COLORS[4],
+    eyebrow:'FIELD DEPLOYMENTS', title:'Internship Log', duration:10000,
+    body:`<div class="h-timeline">
+      <div class="h-titem"><div class="h-year">30 JAN – 06 FEB 2025</div><h4>Biomedical Equipment Internship</h4><div class="h-note">Dr. Thiru Neuro &amp; Multispeciality Hospital, Salem</div></div>
+      <div class="h-titem"><div class="h-year">04 JUL – 19 JUL 2025</div><h4>Image &amp; Signal Processing Internship</h4><div class="h-note">Odugaatech Pvt. Ltd., Salem</div></div>
+      <div class="h-titem"><div class="h-year">26 SEP 2025</div><h4>Industrial Visit</h4><div class="h-note">Medsby Healthcare and Engineering Solutions, Coimbatore</div></div>
+    </div>
+    <div class="h-label" style="margin-top:22px;">WORKSHOPS &amp; ACHIEVEMENTS</div>
+    <div class="h-timeline" style="margin-top:14px;">
+      <div class="h-titem"><h4>Advanced Hands-on Training — Critical Care Equipment</h4><div class="h-note">Mahendra College of Engineering, Salem</div></div>
+      <div class="h-titem"><h4>Workshop on Medical Coding</h4><div class="h-note">Thought Flows Medical Coding Academy, Erode</div></div>
+      <div class="h-titem"><h4>Workshop on AI Tools</h4><div class="h-note">Gen Ai ,Salem</div></div>
+      <div class="h-titem"><h4>Paper Presentation — National Technical Symposium</h4><div class="h-note">"TEKCLUSTER'25"</div></div>
+      <div class="h-titem"><h4>Paper Presentation — National Technical Symposium</h4><div class="h-note">" "VARNAM'26.
+
+    </div>`
+  },
+  {
+    id:'certifications', name:'Aurora Vault', sub:'Certifications', x:1780, y:1420, radius:56, color:PLANET_COLORS[5],
+    eyebrow:'VERIFIED TRANSMISSIONS', title:'Certifications Vault', duration:10000,
+    body:`<div class="h-cert-grid">
+      <div class="h-cert"><div class="h-cert-icon">🐍</div><h5>Python Programming</h5></div>
+      <div class="h-cert"><div class="h-cert-icon">🧩</div><h5>Full Stack Development</h5></div>
+      <div class="h-cert"><div class="h-cert-icon">🗄️</div><h5>Oracle</h5></div>
+      <div class="h-cert"><div class="h-cert-icon">🧬</div><h5>NPTEL — Microsensors, Implantable Devices &amp; Rodent Surgeries for Biomedical Applications</h5></div>
+      <div class="h-cert"><div class="h-cert-icon">📊</div><h5>MATLAB</h5></div>
+    </div>`
+  },
+  {
+    id:'contact', name:'Terminus Relay', sub:'Contact', x:2500, y:1480, radius:60, color:PLANET_COLORS[6],
+    eyebrow:'OPEN CHANNEL', title:'Contact Relay', duration:10000,
+    body:`
+    <div class="h-contact-item"><div class="h-contact-icon">📞</div><a href="tel:8870521082">+91 88705 21082</a></div>
+    <div class="h-contact-item"><div class="h-contact-icon">✉️</div><a href="mailto:sowmiyaa620@gmail.com">sowmiyaa620@gmail.com</a></div>
+    <div class="h-contact-item"><div class="h-contact-icon">💼</div><a href="https://www.linkedin.com/in/a-sowmiya-3a92142a2" target="_blank" rel="noopener">linkedin.com/in/a-sowmiya-3a92142a2</a></div>
+    <div class="h-contact-item"><div class="h-contact-icon">🐙</div><a href="https://github.com/sowmiya-a13" target="_blank" rel="noopener">https://github.com/sowmiya-a13</a></div>
+    <div class="h-contact-item"><div class="h-contact-icon">📍</div><span> Ammapet, Salem – 636003</span></div>
+    <form class="h-form" onsubmit="return handleContactSubmit(event)">
+      
+    </form>`
+  }
+];
+
+const blackHole = { x: 420, y: 1480, radius: 46 };
+
+/* ===================== STARFIELD / AMBIENCE ===================== */
+function rand(a,b){ return a + Math.random()*(b-a); }
+
+const starLayers = [
+  { count: 90, speedFactor: 0.15, size:[0.6,1.3], stars:[] },
+  { count: 60, speedFactor: 0.35, size:[1,1.9], stars:[] },
+  { count: 35, speedFactor: 0.6, size:[1.4,2.6], stars:[] }
+];
+starLayers.forEach(layer=>{
+  for(let i=0;i<layer.count;i++){
+    layer.stars.push({ x: rand(0,W), y: rand(0,H), r: rand(layer.size[0],layer.size[1]), tw: Math.random()*Math.PI*2 });
+  }
+});
+
+const nebulae = [
+  { x: 500, y: 400, r: 480, color: 'rgba(107,46,255,0.16)' },
+  { x: 1700, y: 300, r: 420, color: 'rgba(0,217,255,0.12)' },
+  { x: 2300, y: 1300, r: 500, color: 'rgba(57,255,224,0.10)' },
+  { x: 1000, y: 1500, r: 460, color: 'rgba(107,46,255,0.12)' }
+];
+
+let shootingStars = [];
+function maybeSpawnShootingStar(){
+  if(Math.random() < 0.006){
+    const fromLeft = Math.random() < 0.5;
+    shootingStars.push({
+      x: fromLeft ? -50 : W+50,
+      y: rand(0, H*0.6),
+      vx: fromLeft ? rand(500,750) : -rand(500,750),
+      vy: rand(180,320),
+      life: 1
+    });
+  }
+}
+
+let ambientParticles = [];
+for(let i=0;i<50;i++){
+  ambientParticles.push({ x: rand(0,W), y: rand(0,H), r: rand(0.5,1.6), vy: rand(4,14), o: rand(0.15,0.5) });
+}
+
+/* ===================== JOURNEY / CAMERA STATE ===================== */
+const state = {
+  cam: { x: WORLD.w/2, y: WORLD.h/2, zoom: 0.5 },
+  camFrom: { x: WORLD.w/2, y: WORLD.h/2, zoom: 0.5 },
+  camTo: { x: WORLD.w/2, y: WORLD.h/2, zoom: 0.5 },
+  camVelX: 0, camVelY: 0,
+  prevCamX: WORLD.w/2, prevCamY: WORLD.h/2,
+  index: -1,
+  phase: 'idle', // idle | establishing | traveling | arriving | presenting | complete
+  phaseStart: 0,
+  phaseDuration: 0,
+  presentStart: 0,
+  paused: false,
+  pauseTimestamp: 0,
+  started: false,
+  visited: new Set(),
+  lastTime: performance.now(),
+  _lastNow: performance.now(),
+  typeTimer: null
+};
+
+const TRAVEL_MS = 2600;
+const ARRIVE_MS = 500;
+const ESTABLISH_MS = 2200;
+const DWELL_MS = 10000; // exactly 10 seconds of presentation per planet
+const PRESENT_ZOOM_GAIN = 0.16; // continuous cinematic zoom-in during the 10s dwell
+
+function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+
+function targetZoomFor(pl){
+  const screenR = Math.min(W,H)*0.24;
+  return Math.min(3.2, Math.max(1.15, screenR/pl.radius));
+}
+
+function setPhase(phase, duration){
+  state.phase = phase;
+  state.phaseStart = performance.now();
+  state.phaseDuration = duration || 0;
+}
+
+/* ===================== JOURNEY CONTROL ===================== */
+function startJourney(){
+  state.started = true;
+  document.getElementById('startScreen').classList.add('hidden');
+  state.cam = { x: WORLD.w*0.5, y: WORLD.h*0.55, zoom: 0.46 };
+  state.prevCamX = state.cam.x; state.prevCamY = state.cam.y;
+  state.camFrom = { x: state.cam.x, y: state.cam.y, zoom: state.cam.zoom };
+  state.camTo = { x: planets[0].x, y: planets[0].y, zoom: 0.68 };
+  state.index = -1;
+  setPhase('establishing', ESTABLISH_MS);
+  const lbl = document.getElementById('transitLabel');
+  lbl.textContent = 'INITIATING FLYTHROUGH';
+  lbl.classList.add('show');
+  updateProgressUI();
+}
+
+function goToPlanet(idx){
+  if(idx >= planets.length){ enterComplete(); return; }
+  if(idx < 0) idx = 0;
+  closeInfoPanelVisual();
+  state.paused = false; updatePauseUI();
+  state.index = idx;
+  const pl = planets[idx];
+  state.camFrom = { x: state.cam.x, y: state.cam.y, zoom: state.cam.zoom };
+  state.camTo = { x: pl.x, y: pl.y, zoom: targetZoomFor(pl) };
+  setPhase('traveling', TRAVEL_MS);
+  const lbl = document.getElementById('transitLabel');
+  lbl.textContent = 'EN ROUTE TO ' + pl.name.toUpperCase();
+  lbl.classList.add('show');
+  updateProgressUI();
+}
+
+function arriveAtPlanet(){
+  const pl = planets[state.index];
+  state.cam.x = pl.x; state.cam.y = pl.y; state.cam.zoom = targetZoomFor(pl);
+  const flash = document.getElementById('dockFlash');
+  flash.classList.remove('flash'); void flash.offsetWidth; flash.classList.add('flash');
+  document.getElementById('transitLabel').classList.remove('show');
+  setPhase('arriving', ARRIVE_MS);
+}
+
+function presentPlanet(){
+  const pl = planets[state.index];
+  setPhase('presenting', DWELL_MS);
+  state.presentStart = performance.now();
+  state.presentZoomBase = state.cam.zoom; // camera keeps slowly zooming in from here for the full 10s
+  state.visited.add(pl.id);
+  openInfoPanel(pl);
+  updateProgressUI();
+}
+
+/* ===================== PER-SECTION PAUSE / RUN / CANCEL CONTROLS ===================== */
+// PAUSE: freeze this section's dwell timer and cinematic zoom; click again to resume.
+function togglePause(){
+  if(!state.started || state.phase !== 'presenting') return;
+  state.paused = !state.paused;
+  if(state.paused){
+    state.pauseTimestamp = performance.now();
+  } else {
+    state.presentStart += (performance.now() - state.pauseTimestamp);
+  }
+  updatePauseUI();
+}
+function updatePauseUI(){
+  const btn = document.getElementById('panelPauseBtn');
+  btn.textContent = state.paused ? '▶ RESUME' : '⏸ PAUSE';
+  btn.classList.toggle('is-paused', state.paused);
+}
+document.getElementById('panelPauseBtn').addEventListener('click', togglePause);
+
+// RUN: replay this section's reveal animation from the beginning, once.
+document.getElementById('panelRunBtn').addEventListener('click', ()=>{
+  if(!state.started || state.phase !== 'presenting') return;
+  const pl = planets[state.index];
+  state.cam.zoom = targetZoomFor(pl); // reset the cinematic zoom before replaying
+  state.paused = false; updatePauseUI();
+  presentPlanet();
+});
+// CANCEL: stop this section immediately and move on to the next one.
+document.getElementById('panelCancelBtn').addEventListener('click', ()=>{
+  if(!state.started || state.phase !== 'presenting') return;
+  state.paused = false; updatePauseUI();
+  goToPlanet(state.index + 1);
+});
+
+const RETURN_HOME_MS = 3000; // how long the success message stays up before returning Home
+
+function enterComplete(){
+  closeInfoPanelVisual();
+  closeSectionMenu();
+  document.getElementById('transitLabel').classList.remove('show');
+  setPhase('complete', 0);
+  // Show the single success message exactly once — no looping, no replay.
+  document.getElementById('completeScreen').classList.add('open');
+  setTimeout(goHome, RETURN_HOME_MS);
+}
+
+function goHome(){
+  document.getElementById('completeScreen').classList.remove('open');
+  document.getElementById('startScreen').classList.remove('hidden');
+  state.started = false;
+  state.index = -1;
+  state.visited.clear();
+  setPhase('idle', 0);
+  updateProgressUI();
+}
+
+function updateJourney(now){
+  if(!state.started) return;
+
+  if(state.phase === 'establishing' || state.phase === 'traveling'){
+    const t = Math.min(1, (now - state.phaseStart)/state.phaseDuration);
+    const e = easeInOutCubic(t);
+    state.cam.x = state.camFrom.x + (state.camTo.x - state.camFrom.x)*e;
+    state.cam.y = state.camFrom.y + (state.camTo.y - state.camFrom.y)*e;
+    state.cam.zoom = state.camFrom.zoom + (state.camTo.zoom - state.camFrom.zoom)*e;
+    if(t >= 1){
+      if(state.phase === 'establishing'){ goToPlanet(0); }
+      else { arriveAtPlanet(); }
+    }
+  } else if(state.phase === 'arriving'){
+    const t = (now - state.phaseStart)/state.phaseDuration;
+    if(t >= 1){ presentPlanet(); }
+  } else if(state.phase === 'presenting'){
+    if(!state.paused){
+      const elapsed = now - state.presentStart;
+      const remaining = DWELL_MS - elapsed;
+      const t = Math.min(1, Math.max(0, elapsed/DWELL_MS));
+      // slow, continuous cinematic zoom-in on the planet for the full 10-second dwell — plays once, then advances
+      state.cam.zoom = state.presentZoomBase * (1 + PRESENT_ZOOM_GAIN * t);
+      const bar = document.getElementById('dwellFill');
+      if(bar) bar.style.width = Math.max(0, remaining/DWELL_MS*100) + '%';
+      if(remaining <= 0){ goToPlanet(state.index + 1); }
+    }
+  }
+
+  const dtms = now - state._lastNow;
+  state._lastNow = now;
+  if(dtms > 0){
+    state.camVelX = (state.cam.x - state.prevCamX) / (dtms/1000);
+    state.camVelY = (state.cam.y - state.prevCamY) / (dtms/1000);
+  }
+  state.prevCamX = state.cam.x; state.prevCamY = state.cam.y;
+}
+
+/* ===================== SECTION SELECTOR (user picks which section to view) ===================== */
+const sectionMenu = document.getElementById('sectionMenu');
+const sectionMenuList = document.getElementById('sectionMenuList');
+planets.forEach((pl,i)=>{
+  const item = document.createElement('div');
+  item.className = 'section-item';
+  item.innerHTML = `<span class="section-dot" style="background:${pl.color};color:${pl.color}"></span>
+    <span class="section-info"><b>${pl.name}</b><span>${pl.sub}</span></span>
+    <span class="section-check">✔</span>`;
+  item.addEventListener('click', ()=>{
+    if(!state.started) return;
+    document.getElementById('completeScreen').classList.remove('open');
+    closeSectionMenu();
+    goToPlanet(i);
+  });
+  sectionMenuList.appendChild(item);
+});
+
+function updateSectionMenuUI(){
+  Array.from(sectionMenuList.children).forEach((el,i)=>{
+    el.classList.toggle('active', i === state.index);
+    el.classList.toggle('visited', state.visited.has(planets[i].id));
+  });
+}
+
+function openSectionMenu(){ if(state.started) sectionMenu.classList.add('open'); }
+function closeSectionMenu(){ sectionMenu.classList.remove('open'); }
+
+document.getElementById('btnChooseSection').addEventListener('click', openSectionMenu);
+document.getElementById('sectionMenuCloseBtn').addEventListener('click', closeSectionMenu);
+sectionMenu.addEventListener('click', (e)=>{ if(e.target === sectionMenu) closeSectionMenu(); });
+
+/* ===================== PROGRESS (display only — fully automatic, no manual controls) ===================== */
+function updateProgressUI(){
+  const total = planets.length;
+  const n = Math.max(0, state.index + 1);
+  document.getElementById('progressText').textContent = state.index < 0
+    ? `PRE-LAUNCH · ${total} PLANETS`
+    : `PLANET ${n} OF ${total}`;
+  document.getElementById('progressFill').style.width = (n/total*100) + '%';
+  updateSectionMenuUI();
+}
+
+/* ===================== INFO PANEL (typing + fade/slide reveal) ===================== */
+function typeWriter(el, text, speed){
+  if(state.typeTimer) clearInterval(state.typeTimer);
+  el.textContent = '';
+  el.classList.add('typing-cursor');
+  let i = 0;
+  state.typeTimer = setInterval(()=>{
+    i++;
+    el.textContent = text.slice(0, i);
+    if(i >= text.length){
+      clearInterval(state.typeTimer);
+      state.typeTimer = null;
+      el.classList.remove('typing-cursor');
+    }
+  }, speed || 24);
+}
+
+function openInfoPanel(planet){
+  document.getElementById('panelEyebrow').textContent = planet.eyebrow;
+  const titleEl = document.getElementById('panelTitle');
+  const bodyEl = document.getElementById('panelBody');
+  bodyEl.innerHTML = planet.body;
+  bodyEl.scrollTop = 0;
+  document.getElementById('infoPanel').scrollTop = 0;
+
+  const children = Array.from(bodyEl.children);
+  children.forEach(c => c.classList.add('reveal-item'));
+
+  document.getElementById('dwellFill').style.width = '100%';
+  document.getElementById('infoOverlay').classList.add('open');
+
+  typeWriter(titleEl, planet.title, 24);
+
+  children.forEach((c, i)=>{
+    setTimeout(()=>{ c.classList.add('in'); }, 550 + i*140);
+  });
+}
+
+function closeInfoPanelVisual(){
+  document.getElementById('infoOverlay').classList.remove('open');
+  if(state.typeTimer){ clearInterval(state.typeTimer); state.typeTimer = null; }
+}
+
+function handleContactSubmit(e){
+  e.preventDefault();
+  document.getElementById('formMsg').textContent = 'Message transmitted successfully. I will respond shortly!';
+  e.target.reset();
+  return false;
+}
+window.handleContactSubmit = handleContactSubmit;
+
+/* ===================== RENDER ===================== */
+function ws(x,y){
+  const z = state.cam.zoom;
+  return { x: W/2 + (x - state.cam.x)*z, y: H/2 + (y - state.cam.y)*z };
+}
+
+function drawBackground(dt){
+  ctx.clearRect(0,0,W,H);
+
+  const grad = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.75);
+  grad.addColorStop(0,'#0a1230');
+  grad.addColorStop(1,'#020409');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  nebulae.forEach(neb=>{
+    const p = ws(neb.x, neb.y);
+    const sx = W/2 + (p.x - W/2)*0.4;
+    const sy = H/2 + (p.y - H/2)*0.4;
+    const g = ctx.createRadialGradient(sx,sy,0,sx,sy,neb.r);
+    g.addColorStop(0, neb.color);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(sx-neb.r, sy-neb.r, neb.r*2, neb.r*2);
+  });
+
+  starLayers.forEach(layer=>{
+    layer.stars.forEach(s=>{
+      s.tw += dt*2;
+      const offsetX = (state.camVelX * layer.speedFactor * -0.02);
+      const offsetY = (state.camVelY * layer.speedFactor * -0.02);
+      s.x += offsetX * dt; s.y += offsetY * dt;
+      if(s.x < -5) s.x = W+5; if(s.x > W+5) s.x = -5;
+      if(s.y < -5) s.y = H+5; if(s.y > H+5) s.y = -5;
+      const alpha = 0.5 + Math.sin(s.tw)*0.4;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(230,244,255,${Math.max(0.1,alpha)})`;
+      ctx.fill();
+    });
+  });
+
+  maybeSpawnShootingStar();
+  shootingStars.forEach(st=>{
+    st.x += st.vx*dt; st.y += st.vy*dt; st.life -= dt*0.6;
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(180,230,255,${Math.max(0,st.life)})`;
+    ctx.lineWidth = 2;
+    ctx.moveTo(st.x, st.y);
+    ctx.lineTo(st.x - st.vx*0.06, st.y - st.vy*0.06);
+    ctx.stroke();
+  });
+  shootingStars = shootingStars.filter(s=> s.life > 0 && s.x > -100 && s.x < W+100);
+
+  ambientParticles.forEach(p=>{
+    p.y -= p.vy*dt;
+    if(p.y < -5) p.y = H+5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(0,217,255,${p.o})`;
+    ctx.fill();
+  });
+}
+
+let bhRotation = 0;
+function drawBlackHole(dt){
+  bhRotation += dt*1.4;
+  const p = ws(blackHole.x, blackHole.y);
+  const z = state.cam.zoom;
+  const r = blackHole.radius * z;
+  if(p.x < -200 || p.x > W+200 || p.y < -200 || p.y > H+200) return;
+
+  const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*3.2);
+  g.addColorStop(0,'rgba(0,0,0,1)');
+  g.addColorStop(0.35,'rgba(20,0,40,0.9)');
+  g.addColorStop(0.6,'rgba(107,46,255,0.25)');
+  g.addColorStop(1,'transparent');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(p.x,p.y,r*3.2,0,Math.PI*2); ctx.fill();
+
+  for(let i=0;i<3;i++){
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(bhRotation + i*2.1);
+    ctx.scale(1, 0.35);
+    ctx.beginPath();
+    ctx.arc(0,0, r*1.6 + i*14, 0, Math.PI*1.5);
+    ctx.strokeStyle = `rgba(${155-i*20},${100+i*30},255,${0.5-i*0.12})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2);
+  ctx.fillStyle = '#000'; ctx.fill();
+}
+
+function drawPlanets(){
+  const z = state.cam.zoom;
+  planets.forEach(pl=>{
+    const p = ws(pl.x, pl.y);
+    const r = pl.radius * z;
+    if(p.x < -r-100 || p.x > W+r+100 || p.y < -r-100 || p.y > H+r+100) return;
+    const visited = state.visited.has(pl.id);
+    const ringColor = visited ? '#ffd166' : pl.color;
+
+    const glow = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.4);
+    glow.addColorStop(0, pl.color+'55');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(p.x,p.y,r*2.4,0,Math.PI*2); ctx.fill();
+
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(Math.sin(performance.now()/4000 + pl.x)*0.15);
+    ctx.scale(1, 0.38);
+    ctx.beginPath();
+    ctx.ellipse(0,0, r*1.55, r*1.55, 0, 0, Math.PI*2);
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = Math.min(6, 3*Math.sqrt(z));
+    ctx.shadowColor = ringColor; ctx.shadowBlur = 16;
+    ctx.stroke();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+
+    const sphereGrad = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
+    sphereGrad.addColorStop(0, '#ffffff');
+    sphereGrad.addColorStop(0.25, pl.color);
+    sphereGrad.addColorStop(1, '#050914');
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx.fillStyle = sphereGrad;
+    ctx.fill();
+
+    if(visited){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,r+4,0,Math.PI*2);
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.7;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  });
+}
+
+function render(dt){
+  drawBackground(dt);
+  drawBlackHole(dt);
+  drawPlanets();
+  updateLabels();
+  drawMinimap();
+}
+
+/* ===================== DOM OVERLAYS ===================== */
+const labelContainer = document.getElementById('planetLabels');
+const labelEls = {};
+planets.forEach(pl=>{
+  const el = document.createElement('div');
+  el.className = 'planet-label';
+  el.innerHTML = `<div class="p-name">${pl.name}<span class="p-check">✔</span></div><div class="p-sub">${pl.sub}</div>`;
+  labelContainer.appendChild(el);
+  labelEls[pl.id] = el;
+});
+
+function updateLabels(){
+  planets.forEach((pl,i)=>{
+    const p = ws(pl.x, pl.y);
+    const r = pl.radius * state.cam.zoom;
+    const el = labelEls[pl.id];
+    el.style.left = p.x + 'px';
+    el.style.top = (p.y + r + 26) + 'px';
+    el.classList.toggle('visited', state.visited.has(pl.id));
+    const hideBecausePresenting = state.phase === 'presenting' && i === state.index;
+    const onScreen = p.x > -60 && p.x < W+60 && p.y > -60 && p.y < H+60;
+    el.style.opacity = (onScreen && !hideBecausePresenting) ? '1' : '0';
+  });
+}
+
+function drawMinimap(){
+  mmCtx.clearRect(0,0,140,90);
+  mmCtx.fillStyle = 'rgba(255,255,255,0.03)';
+  mmCtx.fillRect(0,0,140,90);
+  const sx = 140/WORLD.w, sy = 90/WORLD.h;
+
+  mmCtx.beginPath();
+  mmCtx.arc(blackHole.x*sx, blackHole.y*sy, 3, 0, Math.PI*2);
+  mmCtx.fillStyle = '#6a2eff';
+  mmCtx.fill();
+
+  planets.forEach((pl,i)=>{
+    const visited = state.visited.has(pl.id);
+    const active = i === state.index;
+    mmCtx.beginPath();
+    mmCtx.arc(pl.x*sx, pl.y*sy, active?3.6:2.6, 0, Math.PI*2);
+    mmCtx.fillStyle = visited ? '#ffd166' : pl.color;
+    mmCtx.shadowColor = mmCtx.fillStyle;
+    mmCtx.shadowBlur = active?9:5;
+    mmCtx.fill();
+    mmCtx.shadowBlur = 0;
+    if(active){
+      mmCtx.beginPath();
+      mmCtx.arc(pl.x*sx, pl.y*sy, 6 + Math.sin(performance.now()/220)*1.5, 0, Math.PI*2);
+      mmCtx.strokeStyle = '#ffffff';
+      mmCtx.lineWidth = 1;
+      mmCtx.globalAlpha = 0.6;
+      mmCtx.stroke();
+      mmCtx.globalAlpha = 1;
+    }
+  });
+
+  mmCtx.beginPath();
+  mmCtx.arc(state.cam.x*sx, state.cam.y*sy, 2, 0, Math.PI*2);
+  mmCtx.strokeStyle = '#ffffff';
+  mmCtx.lineWidth = 1.4;
+  mmCtx.stroke();
+}
+
+/* ===================== MAIN LOOP ===================== */
+function loop(now){
+  const dt = Math.min(0.05, (now - state.lastTime)/1000);
+  state.lastTime = now;
+  updateJourney(now);
+  render(dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ===================== BOOT SEQUENCE ===================== */
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{ document.getElementById('loader').classList.add('hidden'); }, 900);
+});
+document.getElementById('launchBtn').addEventListener('click', ()=>{
+  startJourney();
+});
+document.getElementById('startChooseSectionBtn').addEventListener('click', ()=>{
+  state.started = true;
+  document.getElementById('startScreen').classList.add('hidden');
+  state.cam = { x: WORLD.w*0.5, y: WORLD.h*0.55, zoom: 0.46 };
+  state.prevCamX = state.cam.x; state.prevCamY = state.cam.y;
+  state.index = -1;
+  setPhase('idle', 0);
+  updateProgressUI();
+  openSectionMenu();
+});
+</script>
+</body>
+</html>
